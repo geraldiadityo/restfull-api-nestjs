@@ -4,6 +4,8 @@ import { WinstonModule } from 'nest-winston';
 import * as winston from 'winston';
 import { PrismaServices } from './prisma.service';
 import { ValidationService } from './validation.service';
+import { APP_FILTER } from '@nestjs/core';
+import { ErrorFilter } from './error.filter';
 
 @Global()
 @Module({
@@ -17,7 +19,14 @@ import { ValidationService } from './validation.service';
         isGlobal: true
     })
     ],
-    providers: [PrismaServices, ValidationService],
-    exports: [PrismaServices, ValidationService]
+    providers: [
+        PrismaServices, 
+        ValidationService,
+        {
+            provide: APP_FILTER,
+            useClass: ErrorFilter
+        }
+    ],
+    exports: [PrismaServices, ValidationService],
 })
 export class CommonModule {}
