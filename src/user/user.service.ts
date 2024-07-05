@@ -7,6 +7,7 @@ import { Logger } from "winston";
 import { UserValidation } from "./user.validation";
 import * as bcrypt from 'bcrypt';
 import { v4 as uuid } from "uuid";
+import { User } from "@prisma/client";
 @Injectable()
 export class UserService {
     constructor(
@@ -72,5 +73,12 @@ export class UserService {
             name: user.name,
             token: user.token
         }
+    }
+
+    async get(user: User): Promise<UserResponse>{
+        return {
+            username: user.username,
+            name: user.name
+        };
     }
 }
