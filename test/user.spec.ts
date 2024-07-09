@@ -138,4 +138,95 @@ describe('User Controller)', () => {
     });
 
   });
+  describe("PATCH /api/users/current", () => {
+    beforeEach(async () => {
+      await testService.deleteUser();
+      await testService.createUser();
+    });
+
+    it("should be rejected if request is invalid", async () => {
+      const response = await request(app.getHttpServer())
+      .patch('/api/users/current')
+      .set('Authorization', 'test')
+      .send({
+        password: '',
+        name: ''
+      });
+
+      logger.info(response.body);
+
+      expect(response.status).toBe(400);
+      expect(response.body).toBeDefined();
+    });
+    it("should be able to update data name", async () => {
+      const response = await request(app.getHttpServer())
+      .patch('/api/users/current')
+      .set('Authorization', 'test')
+      .send({
+        name: 'test_ubah'
+      });
+
+      logger.info(response.body);
+
+      expect(response.status).toBe(200);
+      expect(response.body.data.username).toBe('test');
+      expect(response.body.data.name).toBe('test_ubah');
+    });
+
+    it("should be able to update data password", async () => {
+      let response = await request(app.getHttpServer())
+      .patch('/api/users/current')
+      .set('Authorization', 'test')
+      .send({
+        password: 'test_ubah'
+      });
+
+      logger.info(response.body);
+
+      expect(response.status).toBe(200);
+      expect(response.body.data.username).toBe('test');
+
+      response = await request(app.getHttpServer())
+      .post('/api/users/login')
+      .send({
+        username: 'test',
+        password: 'test_ubah'
+      });
+
+      logger.info(response.body);
+
+      expect(response.status).toBe(200);
+      expect(response.body.data.token).toBeDefined();
+
+    });
+  });
+
+  describe("DELETE /api/users/current", () => {
+    beforeEach(async () => {
+      await testService.deleteUser();
+      await testService.createUser()
+    });
+
+    it("should be rejected if token is invalid", async () => {
+      const response = await request(app.getHttpServer())
+      .delete('/api/users/current')
+      .set('Authorization', 'wrong');
+
+      logger.info(response.body);
+
+      expect(response.status).toBe(401);
+      expect(response.body).toBeDefined();
+    });
+    it("should be able to logout", async () => {
+      const response = await request(app.getHttpServer())
+      .delete('/api/users/current')
+      .set('Authorization', 'test');
+
+      logger.info(response.body);
+
+      expect(response.status).toBe(200);
+      expect(response.body.data).toBe(true);
+    });
+
+  });
 });
