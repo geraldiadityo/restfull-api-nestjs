@@ -70,7 +70,9 @@ export class UserService {
       user.password,
     );
     if (!isPasswordValid) {
-      throw new HttpException('Username or password invalid', 401);
+      throw new HttpException({
+        message: 'Usename or Password is invalid',
+      }, 401);
     }
 
     user = await this.prismaService.user.update({
