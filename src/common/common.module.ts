@@ -1,4 +1,4 @@
-import { Global, MiddlewareConsumer, Module, NestModule } from '@nestjs/common';
+import { Global, MiddlewareConsumer, Module, NestModule, RequestMethod } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { WinstonModule } from 'nest-winston';
 import * as winston from 'winston';
@@ -32,6 +32,17 @@ import { AuthMiddleware } from './auth.middleware';
 })
 export class CommonModule implements NestModule {
   configure(consumer: MiddlewareConsumer) {
-    consumer.apply(AuthMiddleware).forRoutes('/api/*');
+    consumer.apply(AuthMiddleware).exclude({
+      path: '/api/users/login',
+      method: RequestMethod.ALL
+    })
+    .exclude({
+      path: '/api/users/',
+      method: RequestMethod.POST
+    })
+    .forRoutes({
+      path: '/api/*',
+      method: RequestMethod.ALL
+    });
   }
 }

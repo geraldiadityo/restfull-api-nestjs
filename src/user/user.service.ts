@@ -11,14 +11,15 @@ import {
 import { Logger } from 'winston';
 import { UserValidation } from './user.validation';
 import * as bcrypt from 'bcrypt';
-import { v4 as uuid } from 'uuid';
 import { User } from '@prisma/client';
+import { JwtService } from '@nestjs/jwt';
 @Injectable()
 export class UserService {
   constructor(
     private validationService: ValidationService,
     @Inject(WINSTON_MODULE_PROVIDER) private logger: Logger,
     private prismaService: PrismaServices,
+    private jwtService: JwtService
   ) {}
   async register(request: RegisterUserRequest): Promise<UserResponse> {
     this.logger.debug(`Register New User ${JSON.stringify(request)}`);
@@ -48,47 +49,37 @@ export class UserService {
     };
   }
 
-  async login(request: LoginUserRequest): Promise<UserResponse> {
-    this.logger.debug(`userServices.login(${JSON.stringify(request)})`);
-    const loginRequest: LoginUserRequest = this.validationService.validate(
-      UserValidation.LOGIN,
-      request,
-    );
+  async validateUser(
+    request: LoginUserRequest
+  ): Promise<User> {
+    this.logger.debug(`attemp login ${JSON.stringify(request)}`);
+    const loginRequest = this.validationService.validate(UserValidation.LOGIN, request);
 
-    let user = await this.prismaService.user.findUnique({
+    const user = await this.prismaService.user.findUnique({
       where: {
-        username: loginRequest.username,
-      },
+        username: loginRequest.username
+      }
     });
 
-    if (!user) {
-      throw new HttpException('Username or password invalid', 401);
+    if(!user){
+      throw new HttpException('Username or Password is invalid', 401);
     }
 
-    const isPasswordValid = await bcrypt.compare(
-      loginRequest.password,
-      user.password,
-    );
-    if (!isPasswordValid) {
-      throw new HttpException({
-        message: 'Usename or Password is invalid',
-      }, 401);
+    if(!(user && bcrypt.compareSync(loginRequest.password, user.password))){
+      throw new HttpException('Username or Password is invalid', 401);
     }
 
-    user = await this.prismaService.user.update({
-      where: {
-        username: loginRequest.username,
-      },
-      data: {
-        token: uuid(),
-      },
-    });
+    return user;
+  }
 
+  async login(user: User): Promise<UserResponse> {
+    const payload = { username:user.username, sub: user.name  };
+    
     return {
       username: user.username,
       name: user.name,
-      token: user.token,
-    };
+      token: this.jwtService.sign(payload),
+    }
   }
 
   async get(user: User): Promise<UserResponse> {

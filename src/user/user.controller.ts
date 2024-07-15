@@ -4,6 +4,7 @@ import {
   Delete,
   Get,
   HttpCode,
+  HttpException,
   Patch,
   Post,
 } from '@nestjs/common';
@@ -39,7 +40,13 @@ export class UserController {
   async login(
     @Body() request: LoginUserRequest,
   ): Promise<WebResponse<UserResponse>> {
-    const result = await this.userService.login(request);
+    const user = await this.userService.validateUser(request);
+
+    if(!user){
+      throw new HttpException('Invalid Credential', 401);
+    }
+
+    const result = await this.userService.login(user)
 
     return {
       data: result,
