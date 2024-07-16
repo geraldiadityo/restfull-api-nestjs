@@ -9,6 +9,7 @@ import {
   Put,
   Delete,
   Query,
+  UseGuards,
 } from '@nestjs/common';
 import { ContactService } from './contact.service';
 import { Auth } from '../common/auth.decorator';
@@ -19,12 +20,12 @@ import {
   SearchContactRequest,
   UpdateContactRequest,
 } from '../model/contact.model';
-import { WebResponse } from 'src/model/web.model';
-
+import { WebResponse } from '../model/web.model';
 @Controller('/api/contacts')
 export class ContactController {
   constructor(private contactService: ContactService) {}
-
+  // @UseGuards(RoleGuard)
+  // @Roles(['Superadmin'])
   @Post()
   @HttpCode(200)
   async create(

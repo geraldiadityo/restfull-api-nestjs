@@ -46,6 +46,7 @@ export class UserService {
     return {
       username: user.username,
       name: user.name,
+      role: user.role
     };
   }
 
@@ -78,6 +79,7 @@ export class UserService {
     return {
       username: user.username,
       name: user.name,
+      role: user.role,
       token: this.jwtService.sign(payload),
     }
   }
@@ -86,6 +88,7 @@ export class UserService {
     return {
       username: user.username,
       name: user.name,
+      role: user.role
     };
   }
 
@@ -115,22 +118,7 @@ export class UserService {
     return {
       name: result.name,
       username: result.username,
-    };
-  }
-
-  async logout(user: User): Promise<UserResponse> {
-    const result = await this.prismaService.user.update({
-      where: {
-        username: user.username,
-      },
-      data: {
-        token: null,
-      },
-    });
-
-    return {
-      username: result.username,
-      name: result.name,
+      role: result.role
     };
   }
 }

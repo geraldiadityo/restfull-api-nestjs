@@ -7,6 +7,7 @@ import {
   HttpException,
   Patch,
   Post,
+  UseGuards,
 } from '@nestjs/common';
 import { UserService } from './user.service';
 import { WebResponse } from '../model/web.model';
@@ -18,12 +19,16 @@ import {
 } from '../model/user.model';
 import { Auth } from '../common/auth.decorator';
 import { User } from '@prisma/client';
+import { RoleGuard } from '../common/role.guard';
+import { Roles } from '../common/role.decorator';
 
 @Controller('/api/users')
 export class UserController {
   constructor(private userService: UserService) {}
 
   @Post()
+  @UseGuards(RoleGuard)
+  @Roles(['Superadmin'])
   @HttpCode(200)
   async register(
     @Body() request: RegisterUserRequest,
@@ -34,7 +39,6 @@ export class UserController {
       data: result,
     };
   }
-
   @Post('/login')
   @HttpCode(200)
   async login(
@@ -71,16 +75,6 @@ export class UserController {
     const result = await this.userService.update(user, request);
     return {
       data: result,
-    };
-  }
-
-  @Delete('/current')
-  @HttpCode(200)
-  async logout(@Auth() user: User): Promise<WebResponse<boolean>> {
-    await this.userService.logout(user);
-
-    return {
-      data: true,
     };
   }
 }

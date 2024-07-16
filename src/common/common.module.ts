@@ -4,9 +4,10 @@ import { WinstonModule } from 'nest-winston';
 import * as winston from 'winston';
 import { PrismaServices } from './prisma.service';
 import { ValidationService } from './validation.service';
-import { APP_FILTER } from '@nestjs/core';
+import { APP_FILTER, APP_GUARD } from '@nestjs/core';
 import { ErrorFilter } from './error.filter';
 import { AuthMiddleware } from './auth.middleware';
+import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
 
 @Global()
 @Module({
@@ -19,6 +20,10 @@ import { AuthMiddleware } from './auth.middleware';
     ConfigModule.forRoot({
       isGlobal: true,
     }),
+    ThrottlerModule.forRoot([{
+      ttl: 6000,
+      limit: 5,
+    }]),
   ],
   providers: [
     PrismaServices,
@@ -26,6 +31,10 @@ import { AuthMiddleware } from './auth.middleware';
     {
       provide: APP_FILTER,
       useClass: ErrorFilter,
+    },
+    {
+      provide: APP_GUARD,
+      useClass: ThrottlerGuard
     },
   ],
   exports: [PrismaServices, ValidationService],
@@ -35,10 +44,6 @@ export class CommonModule implements NestModule {
     consumer.apply(AuthMiddleware).exclude({
       path: '/api/users/login',
       method: RequestMethod.ALL
-    })
-    .exclude({
-      path: '/api/users/',
-      method: RequestMethod.POST
     })
     .forRoutes({
       path: '/api/*',
